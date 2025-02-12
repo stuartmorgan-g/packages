@@ -47,6 +47,8 @@ class SignInDemoState extends State<SignInDemo> {
         'email',
         'https://www.googleapis.com/auth/contacts.readonly',
       ],
+      /*serverClientId:
+          '479882132969-0d20fkjtr1p8evfomfkf3vmi50uajml2.apps.googleusercontent.com',*/
     ))
           ..catchError((dynamic _) {
             _initialization = null;
