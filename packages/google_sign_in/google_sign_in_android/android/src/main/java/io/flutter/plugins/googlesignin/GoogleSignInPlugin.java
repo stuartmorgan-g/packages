@@ -4,6 +4,7 @@
 
 package io.flutter.plugins.googlesignin;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -153,19 +154,33 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
         @NonNull GetCredentialRequestParams params,
         @NonNull Function1<? super Result<? extends GetCredentialResult>, Unit> callback) {
       try {
-        GetGoogleIdOption.Builder optionBuilder =
-            new GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(params.getFilterToAuthorized())
-                .setAutoSelectEnabled(params.getAutoSelectEnabled());
         String serverClientId = params.getServerClientId();
-        if (serverClientId == null || serverClientId.isEmpty()) {
+        if (isNullOrEmpty(serverClientId)) {
+          // If the required server client ID wasn't explicitly provided, check whether it was in
+          // a google-services.json parsed by the google-services Gradle script.
+          @SuppressLint("DiscouragedApi")
+          int webClientIdIdentifier =
+              context
+                  .getResources()
+                  .getIdentifier("default_web_client_id", "string", context.getPackageName());
+          if (webClientIdIdentifier != 0) {
+            serverClientId = context.getString(webClientIdIdentifier);
+          }
+        }
+        if (isNullOrEmpty(serverClientId)) {
           ResultUtilsKt.completeWithGetCredentialFailure(
               callback,
               new GetCredentialFailure(
                   GetCredentialFailureType.MISSING_SERVER_CLIENT_ID,
                   "CredentialManager requires a serverClientId."));
+          return;
         }
-        optionBuilder.setServerClientId(serverClientId);
+
+        GetGoogleIdOption.Builder optionBuilder =
+            new GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(params.getFilterToAuthorized())
+                .setAutoSelectEnabled(params.getAutoSelectEnabled())
+                .setServerClientId(serverClientId);
         GetGoogleIdOption googleIdOption = optionBuilder.build();
         GetCredentialRequest request =
             new GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build();
@@ -365,6 +380,10 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
         }
       }
       return false;
+    }
+
+    private static boolean isNullOrEmpty(@Nullable String s) {
+      return s == null || s.isEmpty();
     }
   }
 }
