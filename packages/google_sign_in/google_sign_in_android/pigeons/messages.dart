@@ -12,109 +12,18 @@ import 'package:pigeon/pigeon.dart';
   copyrightHeader: 'pigeons/copyright.txt',
 ))
 
-/// Pigeon version of SignInOption.
-// TODO(stuartmorgan): Remove this, and deprecate it in the API; it doesn't
-// seem to be a thing any more.
-enum SignInType {
-  /// Default configuration.
-  standard,
-
-  /// Recommended configuration for game sign in.
-  games,
-}
-
-/// Pigeon version of SignInInitParams.
-///
-/// See SignInInitParams for details.
-class InitParams {
-  /// The parameters to use when initializing the sign in process.
-  const InitParams({
-    this.scopes = const <String>[],
-    this.signInType = SignInType.standard,
-    this.hostedDomain,
-    this.clientId,
-    this.serverClientId,
-    this.forceCodeForRefreshToken = false,
-    this.forceAccountName,
-  });
-
-  final List<String> scopes;
-  final SignInType signInType;
-  // TODO(stuartmorgan): Deprecate and remove? Seems not to exist any more.
-  final String? hostedDomain;
-  final String? clientId;
-  final String? serverClientId;
-  final bool forceCodeForRefreshToken;
-  final String? forceAccountName;
-}
-
-/// Pigeon version of GoogleSignInUserData.
-///
-/// See GoogleSignInUserData for details.
-class UserData {
-  UserData({
-    required this.email,
-    required this.id,
-    this.displayName,
-    this.photoUrl,
-    this.idToken,
-    this.serverAuthCode,
-  });
-
-  final String? displayName;
-  final String email;
-  final String id;
-  final String? photoUrl;
-  final String? idToken;
-  final String? serverAuthCode;
-}
-
-@HostApi()
-abstract class GoogleSignInApi {
-  /// Initializes a sign in request with the given parameters.
-  void init(InitParams params);
-
-  /// Starts a silent sign in.
-  @async
-  UserData signInSilently();
-
-  /// Starts a sign in with user interaction.
-  @async
-  UserData signIn();
-
-  /// Requests the access token for the current sign in.
-  @async
-  @TaskQueue(type: TaskQueueType.serialBackgroundThread)
-  String getAccessToken(String email, bool shouldRecoverAuth);
-
-  /// Signs out the current user.
-  @async
-  void signOut();
-
-  /// Revokes scope grants to the application.
-  @async
-  void disconnect();
-
-  /// Returns whether the user is currently signed in.
-  bool isSignedIn();
-
-  /// Clears the authentication caching for the given token, requiring a
-  /// new sign in.
-  @TaskQueue(type: TaskQueueType.serialBackgroundThread)
-  void clearAuthCache(String token);
-
-  /// Requests access to the given scopes.
-  @async
-  bool requestScopes(List<String> scopes);
-}
-
 /// The information necessary to build a an authorization request.
 ///
 /// Corresponds to the native AuthorizationRequest object, but only contains
 /// the fields used by this plugin.
 class PlatformAuthorizationRequest {
-  PlatformAuthorizationRequest({required this.scopes});
+  PlatformAuthorizationRequest({required this.scopes, this.hostedDomain});
   List<String> scopes;
+  String? hostedDomain;
+  String? accountEmail;
+
+  /// If set, adds a call to requestOfflineAccess(this string, true);
+  String? serverClientIdForForcedRefreshToken;
 }
 
 /// The information necessary to build a credential request.
@@ -185,6 +94,9 @@ class GetCredentialFailure extends GetCredentialResult {
 
   /// The message associated with the failure, if any.
   String? message;
+
+  /// Extra details about the failure, if any.
+  String? details;
 }
 
 /// A successful authentication result.
@@ -226,6 +138,9 @@ class AuthorizeFailure extends AuthorizeResult {
 
   /// The message associated with the failure, if any.
   String? message;
+
+  /// Extra details about the failure, if any.
+  String? details;
 }
 
 /// A successful authorization result.

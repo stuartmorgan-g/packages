@@ -4,6 +4,7 @@
 
 package io.flutter.plugins.googlesignin;
 
+import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -172,7 +173,8 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
               callback,
               new GetCredentialFailure(
                   GetCredentialFailureType.MISSING_SERVER_CLIENT_ID,
-                  "CredentialManager requires a serverClientId."));
+                  "CredentialManager requires a serverClientId.",
+                  null));
           return;
         }
 
@@ -216,7 +218,8 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
                       callback,
                       new GetCredentialFailure(
                           GetCredentialFailureType.UNEXPECTED_CREDENTIAL_TYPE,
-                          "Unexpected credential type: " + credential));
+                          "Unexpected credential type: " + credential,
+                          null));
                 }
               }
 
@@ -239,7 +242,7 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
                 // Errors are reported through the return value as structured data, rather than
                 // a Result error's PlatformException.
                 ResultUtilsKt.completeWithGetCredentialFailure(
-                    callback, new GetCredentialFailure(type, e.getMessage()));
+                    callback, new GetCredentialFailure(type, e.getMessage(), null));
               }
             });
       } catch (RuntimeException e) {
@@ -247,11 +250,8 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
             callback,
             new GetCredentialFailure(
                 GetCredentialFailureType.UNKNOWN,
-                e.getMessage()
-                    + ", Cause: "
-                    + e.getCause()
-                    + ", Stacktrace: "
-                    + Log.getStackTraceString(e)));
+                e.getMessage(),
+                "Cause: " + e.getCause() + ", Stacktrace: " + Log.getStackTraceString(e)));
       }
     }
 
@@ -287,8 +287,19 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
         for (String scope : params.getScopes()) {
           requestedScopes.add(new Scope(scope));
         }
-        AuthorizationRequest authorizationRequest =
-            AuthorizationRequest.builder().setRequestedScopes(requestedScopes).build();
+        AuthorizationRequest.Builder authorizationRequestBuilder =
+            AuthorizationRequest.builder().setRequestedScopes(requestedScopes);
+        if (params.getHostedDomain() != null) {
+          authorizationRequestBuilder.filterByHostedDomain(params.getHostedDomain());
+        }
+        if (params.getServerClientIdForForcedRefreshToken() != null) {
+          authorizationRequestBuilder.requestOfflineAccess(
+              params.getServerClientIdForForcedRefreshToken(), true);
+        }
+        if (params.getAccountEmail() != null) {
+          authorizationRequestBuilder.setAccount(new Account(params.getAccountEmail(), "com.google"));
+        }
+        AuthorizationRequest authorizationRequest = authorizationRequestBuilder.build();
         Identity.getAuthorizationClient(context)
             .authorize(authorizationRequest)
             .addOnSuccessListener(
@@ -298,7 +309,8 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
                       Activity activity = getActivity();
                       if (activity == null) {
                         ResultUtilsKt.completeWithAuthorizeFailure(
-                            callback, new AuthorizeFailure(AuthorizeFailureType.NO_ACTIVITY, null));
+                            callback,
+                            new AuthorizeFailure(AuthorizeFailureType.NO_ACTIVITY, null, null));
                         return;
                       }
                       // Prompt for access. `callback` will be resolved in onActivityResult.
@@ -320,11 +332,14 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
                         ResultUtilsKt.completeWithAuthorizeFailure(
                             callback,
                             new AuthorizeFailure(
-                                AuthorizeFailureType.PENDING_INTENT_EXCEPTION, e.getMessage()));
+                                AuthorizeFailureType.PENDING_INTENT_EXCEPTION,
+                                e.getMessage(),
+                                null));
                       }
                     } else {
                       ResultUtilsKt.completeWithAuthorizeFailure(
-                          callback, new AuthorizeFailure(AuthorizeFailureType.UNAUTHORIZED, null));
+                          callback,
+                          new AuthorizeFailure(AuthorizeFailureType.UNAUTHORIZED, null, null));
                     }
                   } else {
                     ResultUtilsKt.completeWithAuthorizationResult(
@@ -340,18 +355,14 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
                     ResultUtilsKt.completeWithAuthorizeFailure(
                         callback,
                         new AuthorizeFailure(
-                            AuthorizeFailureType.AUTHORIZE_FAILURE, "Authorization failed")));
+                            AuthorizeFailureType.AUTHORIZE_FAILURE, e.getMessage(), null)));
       } catch (RuntimeException e) {
-        // TODO: Add details for the failures to send cause/stacktrace.
         ResultUtilsKt.completeWithAuthorizeFailure(
             callback,
             new AuthorizeFailure(
                 AuthorizeFailureType.API_EXCEPTION,
-                e.getMessage()
-                    + ", Cause: "
-                    + e.getCause()
-                    + ", Stacktrace: "
-                    + Log.getStackTraceString(e)));
+                e.getMessage(),
+                "Cause: " + e.getCause() + ", Stacktrace: " + Log.getStackTraceString(e)));
       }
     }
 
@@ -372,7 +383,7 @@ public class GoogleSignInPlugin implements FlutterPlugin, ActivityAware {
           } catch (ApiException e) {
             ResultUtilsKt.completeWithAuthorizeFailure(
                 pendingAuthorizationCallback,
-                new AuthorizeFailure(AuthorizeFailureType.API_EXCEPTION, e.getMessage()));
+                new AuthorizeFailure(AuthorizeFailureType.API_EXCEPTION, e.getMessage(), null));
           }
           pendingAuthorizationCallback = null;
         } else {

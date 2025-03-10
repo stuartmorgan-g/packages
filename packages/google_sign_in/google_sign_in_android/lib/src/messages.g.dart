@@ -18,15 +18,6 @@ PlatformException _createConnectionError(String channelName) {
   );
 }
 
-/// Pigeon version of SignInOption.
-enum SignInType {
-  /// Default configuration.
-  standard,
-
-  /// Recommended configuration for game sign in.
-  games,
-}
-
 enum GetCredentialFailureType {
   /// Indicates that a credential was returned, but it was not of the expected
   /// type.
@@ -78,109 +69,6 @@ enum AuthorizeFailureType {
   noActivity,
 }
 
-/// Pigeon version of SignInInitParams.
-///
-/// See SignInInitParams for details.
-class InitParams {
-  InitParams({
-    this.scopes = const <String>[],
-    this.signInType = SignInType.standard,
-    this.hostedDomain,
-    this.clientId,
-    this.serverClientId,
-    this.forceCodeForRefreshToken = false,
-    this.forceAccountName,
-  });
-
-  List<String> scopes;
-
-  SignInType signInType;
-
-  String? hostedDomain;
-
-  String? clientId;
-
-  String? serverClientId;
-
-  bool forceCodeForRefreshToken;
-
-  String? forceAccountName;
-
-  Object encode() {
-    return <Object?>[
-      scopes,
-      signInType,
-      hostedDomain,
-      clientId,
-      serverClientId,
-      forceCodeForRefreshToken,
-      forceAccountName,
-    ];
-  }
-
-  static InitParams decode(Object result) {
-    result as List<Object?>;
-    return InitParams(
-      scopes: (result[0] as List<Object?>?)!.cast<String>(),
-      signInType: result[1]! as SignInType,
-      hostedDomain: result[2] as String?,
-      clientId: result[3] as String?,
-      serverClientId: result[4] as String?,
-      forceCodeForRefreshToken: result[5]! as bool,
-      forceAccountName: result[6] as String?,
-    );
-  }
-}
-
-/// Pigeon version of GoogleSignInUserData.
-///
-/// See GoogleSignInUserData for details.
-class UserData {
-  UserData({
-    this.displayName,
-    required this.email,
-    required this.id,
-    this.photoUrl,
-    this.idToken,
-    this.serverAuthCode,
-  });
-
-  String? displayName;
-
-  String email;
-
-  String id;
-
-  String? photoUrl;
-
-  String? idToken;
-
-  String? serverAuthCode;
-
-  Object encode() {
-    return <Object?>[
-      displayName,
-      email,
-      id,
-      photoUrl,
-      idToken,
-      serverAuthCode,
-    ];
-  }
-
-  static UserData decode(Object result) {
-    result as List<Object?>;
-    return UserData(
-      displayName: result[0] as String?,
-      email: result[1]! as String,
-      id: result[2]! as String,
-      photoUrl: result[3] as String?,
-      idToken: result[4] as String?,
-      serverAuthCode: result[5] as String?,
-    );
-  }
-}
-
 /// The information necessary to build a an authorization request.
 ///
 /// Corresponds to the native AuthorizationRequest object, but only contains
@@ -188,13 +76,26 @@ class UserData {
 class PlatformAuthorizationRequest {
   PlatformAuthorizationRequest({
     required this.scopes,
+    this.hostedDomain,
+    this.accountEmail,
+    this.serverClientIdForForcedRefreshToken,
   });
 
   List<String> scopes;
 
+  String? hostedDomain;
+
+  String? accountEmail;
+
+  /// If set, adds a call to requestOfflineAccess(this string, true);
+  String? serverClientIdForForcedRefreshToken;
+
   Object encode() {
     return <Object?>[
       scopes,
+      hostedDomain,
+      accountEmail,
+      serverClientIdForForcedRefreshToken,
     ];
   }
 
@@ -202,6 +103,9 @@ class PlatformAuthorizationRequest {
     result as List<Object?>;
     return PlatformAuthorizationRequest(
       scopes: (result[0] as List<Object?>?)!.cast<String>(),
+      hostedDomain: result[1] as String?,
+      accountEmail: result[2] as String?,
+      serverClientIdForForcedRefreshToken: result[3] as String?,
     );
   }
 }
@@ -301,6 +205,7 @@ class GetCredentialFailure extends GetCredentialResult {
   GetCredentialFailure({
     required this.type,
     this.message,
+    this.details,
   });
 
   /// The type of failure.
@@ -309,10 +214,14 @@ class GetCredentialFailure extends GetCredentialResult {
   /// The message associated with the failure, if any.
   String? message;
 
+  /// Extra details about the failure, if any.
+  String? details;
+
   Object encode() {
     return <Object?>[
       type,
       message,
+      details,
     ];
   }
 
@@ -321,6 +230,7 @@ class GetCredentialFailure extends GetCredentialResult {
     return GetCredentialFailure(
       type: result[0]! as GetCredentialFailureType,
       message: result[1] as String?,
+      details: result[2] as String?,
     );
   }
 }
@@ -355,6 +265,7 @@ class AuthorizeFailure extends AuthorizeResult {
   AuthorizeFailure({
     required this.type,
     this.message,
+    this.details,
   });
 
   /// The type of failure.
@@ -363,10 +274,14 @@ class AuthorizeFailure extends AuthorizeResult {
   /// The message associated with the failure, if any.
   String? message;
 
+  /// Extra details about the failure, if any.
+  String? details;
+
   Object encode() {
     return <Object?>[
       type,
       message,
+      details,
     ];
   }
 
@@ -375,6 +290,7 @@ class AuthorizeFailure extends AuthorizeResult {
     return AuthorizeFailure(
       type: result[0]! as AuthorizeFailureType,
       message: result[1] as String?,
+      details: result[2] as String?,
     );
   }
 }
@@ -420,41 +336,32 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    } else if (value is SignInType) {
+    } else if (value is GetCredentialFailureType) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
-    } else if (value is GetCredentialFailureType) {
+    } else if (value is AuthorizeFailureType) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    } else if (value is AuthorizeFailureType) {
-      buffer.putUint8(131);
-      writeValue(buffer, value.index);
-    } else if (value is InitParams) {
-      buffer.putUint8(132);
-      writeValue(buffer, value.encode());
-    } else if (value is UserData) {
-      buffer.putUint8(133);
-      writeValue(buffer, value.encode());
     } else if (value is PlatformAuthorizationRequest) {
-      buffer.putUint8(134);
+      buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else if (value is GetCredentialRequestParams) {
-      buffer.putUint8(135);
+      buffer.putUint8(132);
       writeValue(buffer, value.encode());
     } else if (value is PlatformGoogleIdTokenCredential) {
-      buffer.putUint8(136);
+      buffer.putUint8(133);
       writeValue(buffer, value.encode());
     } else if (value is GetCredentialFailure) {
-      buffer.putUint8(137);
+      buffer.putUint8(134);
       writeValue(buffer, value.encode());
     } else if (value is GetCredentialSuccess) {
-      buffer.putUint8(138);
+      buffer.putUint8(135);
       writeValue(buffer, value.encode());
     } else if (value is AuthorizeFailure) {
-      buffer.putUint8(139);
+      buffer.putUint8(136);
       writeValue(buffer, value.encode());
     } else if (value is PlatformAuthorizationResult) {
-      buffer.putUint8(140);
+      buffer.putUint8(137);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -466,313 +373,26 @@ class _PigeonCodec extends StandardMessageCodec {
     switch (type) {
       case 129:
         final int? value = readValue(buffer) as int?;
-        return value == null ? null : SignInType.values[value];
+        return value == null ? null : GetCredentialFailureType.values[value];
       case 130:
         final int? value = readValue(buffer) as int?;
-        return value == null ? null : GetCredentialFailureType.values[value];
-      case 131:
-        final int? value = readValue(buffer) as int?;
         return value == null ? null : AuthorizeFailureType.values[value];
-      case 132:
-        return InitParams.decode(readValue(buffer)!);
-      case 133:
-        return UserData.decode(readValue(buffer)!);
-      case 134:
+      case 131:
         return PlatformAuthorizationRequest.decode(readValue(buffer)!);
-      case 135:
+      case 132:
         return GetCredentialRequestParams.decode(readValue(buffer)!);
-      case 136:
+      case 133:
         return PlatformGoogleIdTokenCredential.decode(readValue(buffer)!);
-      case 137:
+      case 134:
         return GetCredentialFailure.decode(readValue(buffer)!);
-      case 138:
+      case 135:
         return GetCredentialSuccess.decode(readValue(buffer)!);
-      case 139:
+      case 136:
         return AuthorizeFailure.decode(readValue(buffer)!);
-      case 140:
+      case 137:
         return PlatformAuthorizationResult.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
-    }
-  }
-}
-
-class GoogleSignInApi {
-  /// Constructor for [GoogleSignInApi].  The [binaryMessenger] named argument is
-  /// available for dependency injection.  If it is left null, the default
-  /// BinaryMessenger will be used which routes to the host platform.
-  GoogleSignInApi(
-      {BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix =
-            messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
-  final BinaryMessenger? pigeonVar_binaryMessenger;
-
-  static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
-
-  final String pigeonVar_messageChannelSuffix;
-
-  /// Initializes a sign in request with the given parameters.
-  Future<void> init(InitParams params) async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.init$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture =
-        pigeonVar_channel.send(<Object?>[params]);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else {
-      return;
-    }
-  }
-
-  /// Starts a silent sign in.
-  Future<UserData> signInSilently() async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.signInSilently$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else if (pigeonVar_replyList[0] == null) {
-      throw PlatformException(
-        code: 'null-error',
-        message: 'Host platform returned null value for non-null return value.',
-      );
-    } else {
-      return (pigeonVar_replyList[0] as UserData?)!;
-    }
-  }
-
-  /// Starts a sign in with user interaction.
-  Future<UserData> signIn() async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.signIn$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else if (pigeonVar_replyList[0] == null) {
-      throw PlatformException(
-        code: 'null-error',
-        message: 'Host platform returned null value for non-null return value.',
-      );
-    } else {
-      return (pigeonVar_replyList[0] as UserData?)!;
-    }
-  }
-
-  /// Requests the access token for the current sign in.
-  Future<String> getAccessToken(String email, bool shouldRecoverAuth) async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.getAccessToken$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture =
-        pigeonVar_channel.send(<Object?>[email, shouldRecoverAuth]);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else if (pigeonVar_replyList[0] == null) {
-      throw PlatformException(
-        code: 'null-error',
-        message: 'Host platform returned null value for non-null return value.',
-      );
-    } else {
-      return (pigeonVar_replyList[0] as String?)!;
-    }
-  }
-
-  /// Signs out the current user.
-  Future<void> signOut() async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.signOut$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else {
-      return;
-    }
-  }
-
-  /// Revokes scope grants to the application.
-  Future<void> disconnect() async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.disconnect$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else {
-      return;
-    }
-  }
-
-  /// Returns whether the user is currently signed in.
-  Future<bool> isSignedIn() async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.isSignedIn$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else if (pigeonVar_replyList[0] == null) {
-      throw PlatformException(
-        code: 'null-error',
-        message: 'Host platform returned null value for non-null return value.',
-      );
-    } else {
-      return (pigeonVar_replyList[0] as bool?)!;
-    }
-  }
-
-  /// Clears the authentication caching for the given token, requiring a
-  /// new sign in.
-  Future<void> clearAuthCache(String token) async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.clearAuthCache$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture =
-        pigeonVar_channel.send(<Object?>[token]);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else {
-      return;
-    }
-  }
-
-  /// Requests access to the given scopes.
-  Future<bool> requestScopes(List<String> scopes) async {
-    final String pigeonVar_channelName =
-        'dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.requestScopes$pigeonVar_messageChannelSuffix';
-    final BasicMessageChannel<Object?> pigeonVar_channel =
-        BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture =
-        pigeonVar_channel.send(<Object?>[scopes]);
-    final List<Object?>? pigeonVar_replyList =
-        await pigeonVar_sendFuture as List<Object?>?;
-    if (pigeonVar_replyList == null) {
-      throw _createConnectionError(pigeonVar_channelName);
-    } else if (pigeonVar_replyList.length > 1) {
-      throw PlatformException(
-        code: pigeonVar_replyList[0]! as String,
-        message: pigeonVar_replyList[1] as String?,
-        details: pigeonVar_replyList[2],
-      );
-    } else if (pigeonVar_replyList[0] == null) {
-      throw PlatformException(
-        code: 'null-error',
-        message: 'Host platform returned null value for non-null return value.',
-      );
-    } else {
-      return (pigeonVar_replyList[0] as bool?)!;
     }
   }
 }

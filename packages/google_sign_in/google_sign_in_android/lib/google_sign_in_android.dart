@@ -14,13 +14,10 @@ import 'src/messages.g.dart';
 // Android, docs in the app-facing package, and/or implementations on other
 // platforms.
 // TODO(stuartmorgan): Replace these with structured errors defined in the
-// platform interface when reworing the API surface.
-// TODO: Use as many of these as are mappable, to minimize disruption.
+// platform interface when reworking the API surface.
 const String _errorCodeSignInCanceled = 'sign_in_canceled';
 const String _errorCodeSignInRequired = 'sign_in_required';
-const String _errorCodeNetworkError = 'network_error';
 const String _errorCodeSignInFailed = 'sign_in_failed';
-const String _errorCodeFailureToRecoverAuth = 'failed_to_recover_auth';
 const String _errorCodeUserRecoverableAuth = 'user_recoverable_auth';
 const String _errorCodeIncorrectConfiguration = 'incorrect_configuration';
 
@@ -39,7 +36,10 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
   final AuthorizationClientApi _authorizationClientApi;
 
   String? _serverClientId;
+  String? _hostedDomain;
   List<String> _desiredScopes = <String>[];
+  bool _forceCodeForRefreshToken = false;
+  String? _forcedAccountName;
 
   /// Registers this class as the default instance of [GoogleSignInPlatform].
   static void registerWith() {
@@ -65,11 +65,14 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
 
   @override
   Future<void> initWithParams(SignInInitParameters params) async {
-    // TODO: Is clientId gone? hostedDomain seems to be.
-    // TODO: forceCodeForRefreshToken needs implementing; seems to still exist.
     _desiredScopes = params.scopes;
     _serverClientId = params.serverClientId;
-    // TODO: Consider wiring up prepareGetCredentials here.
+    // The clientId parameter is not supported on Android.
+    // Android apps are identified by their package name and the SHA-1 of their signing key.
+    _hostedDomain = params.hostedDomain;
+    _forceCodeForRefreshToken = params.forceCodeForRefreshToken;
+    _forcedAccountName = params.forceAccountName;
+    // TODO(stuartmorgan): Consider adding a prepareGetCredentials call here.
   }
 
   @override
@@ -87,8 +90,10 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
     // to authorize scopes silently.
     // TODO(stuartmorgan): Restructure the plugin API to eliminate the need for
     // this; see https://github.com/flutter/flutter/issues/119300.
-    final PlatformAuthorizationResult? authorization =
-        await _authorize(promptIfUnauthorized: false, scopes: _desiredScopes);
+    final PlatformAuthorizationResult? authorization = await _authorize(
+        promptIfUnauthorized: false,
+        scopes: _desiredScopes,
+        accountEmail: _forcedAccountName);
     if (authorization == null) {
       return null;
     }
@@ -123,8 +128,10 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
     // to authorize scopes.
     // TODO(stuartmorgan): Restructure the plugin API to eliminate the need for
     // this; see https://github.com/flutter/flutter/issues/119300.
-    final PlatformAuthorizationResult? authorization =
-        await _authorize(promptIfUnauthorized: true, scopes: _desiredScopes);
+    final PlatformAuthorizationResult? authorization = await _authorize(
+        promptIfUnauthorized: true,
+        scopes: _desiredScopes,
+        accountEmail: _forcedAccountName);
     if (authorization == null) {
       return null;
     }
@@ -179,9 +186,16 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
   Future<PlatformAuthorizationResult?> _authorize(
       {required bool promptIfUnauthorized,
       required List<String> scopes,
+      String? accountEmail,
       bool throwGoogleSignInCompatExceptions = false}) async {
     final AuthorizeResult authzResult = await _authorizationClientApi.authorize(
-        PlatformAuthorizationRequest(scopes: scopes),
+        PlatformAuthorizationRequest(
+          scopes: scopes,
+          hostedDomain: _hostedDomain,
+          serverClientIdForForcedRefreshToken:
+              _forceCodeForRefreshToken ? _serverClientId : null,
+          accountEmail: accountEmail,
+        ),
         promptIfUnauthorized: promptIfUnauthorized);
     switch (authzResult) {
       case AuthorizeFailure():
@@ -217,9 +231,11 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
     // TODO(stuartmorgan): Eliminate or restructure this method in the new API,
     // since it mixes tokens from different steps.
     // See https://github.com/flutter/flutter/issues/119300.
-    // TODO: Probably need to assert if the emails don't match?
     final PlatformAuthorizationResult? authorization = await _authorize(
-        promptIfUnauthorized: promptIfUnauthorized, scopes: _desiredScopes);
+        promptIfUnauthorized: promptIfUnauthorized,
+        scopes: _desiredScopes,
+        accountEmail: email,
+        throwGoogleSignInCompatExceptions: true);
     if (authorization == null) {
       // This is explicitly documented behavior in the app-facing package,
       // unfortunately, so replicate it here.
@@ -270,7 +286,8 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
   @override
   Future<bool> requestScopes(List<String> scopes) async {
     final AuthorizeResult result = await _authorizationClientApi.authorize(
-        PlatformAuthorizationRequest(scopes: scopes),
+        PlatformAuthorizationRequest(
+            scopes: scopes, hostedDomain: _hostedDomain),
         promptIfUnauthorized: true);
     switch (result) {
       case AuthorizeFailure():
@@ -287,7 +304,8 @@ class GoogleSignInAndroid extends GoogleSignInPlatform {
     String? accessToken,
   }) async {
     final AuthorizeResult result = await _authorizationClientApi.authorize(
-        PlatformAuthorizationRequest(scopes: scopes),
+        PlatformAuthorizationRequest(
+            scopes: scopes, hostedDomain: _hostedDomain),
         promptIfUnauthorized: false);
     switch (result) {
       case AuthorizeFailure():

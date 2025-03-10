@@ -43,20 +43,6 @@ class FlutterError(
     val details: Any? = null
 ) : Throwable()
 
-/** Pigeon version of SignInOption. */
-enum class SignInType(val raw: Int) {
-  /** Default configuration. */
-  STANDARD(0),
-  /** Recommended configuration for game sign in. */
-  GAMES(1);
-
-  companion object {
-    fun ofRaw(raw: Int): SignInType? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
 enum class GetCredentialFailureType(val raw: Int) {
   /** Indicates that a credential was returned, but it was not of the expected type. */
   UNEXPECTED_CREDENTIAL_TYPE(0),
@@ -115,85 +101,6 @@ enum class AuthorizeFailureType(val raw: Int) {
 }
 
 /**
- * Pigeon version of SignInInitParams.
- *
- * See SignInInitParams for details.
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
-data class InitParams(
-    val scopes: List<String>,
-    val signInType: SignInType,
-    val hostedDomain: String? = null,
-    val clientId: String? = null,
-    val serverClientId: String? = null,
-    val forceCodeForRefreshToken: Boolean
-) {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): InitParams {
-      val scopes = pigeonVar_list[0] as List<String>
-      val signInType = pigeonVar_list[1] as SignInType
-      val hostedDomain = pigeonVar_list[2] as String?
-      val clientId = pigeonVar_list[3] as String?
-      val serverClientId = pigeonVar_list[4] as String?
-      val forceCodeForRefreshToken = pigeonVar_list[5] as Boolean
-      return InitParams(
-          scopes, signInType, hostedDomain, clientId, serverClientId, forceCodeForRefreshToken)
-    }
-  }
-
-  fun toList(): List<Any?> {
-    return listOf(
-        scopes,
-        signInType,
-        hostedDomain,
-        clientId,
-        serverClientId,
-        forceCodeForRefreshToken,
-    )
-  }
-}
-
-/**
- * Pigeon version of GoogleSignInUserData.
- *
- * See GoogleSignInUserData for details.
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
-data class UserData(
-    val displayName: String? = null,
-    val email: String,
-    val id: String,
-    val photoUrl: String? = null,
-    val idToken: String? = null,
-    val serverAuthCode: String? = null
-) {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): UserData {
-      val displayName = pigeonVar_list[0] as String?
-      val email = pigeonVar_list[1] as String
-      val id = pigeonVar_list[2] as String
-      val photoUrl = pigeonVar_list[3] as String?
-      val idToken = pigeonVar_list[4] as String?
-      val serverAuthCode = pigeonVar_list[5] as String?
-      return UserData(displayName, email, id, photoUrl, idToken, serverAuthCode)
-    }
-  }
-
-  fun toList(): List<Any?> {
-    return listOf(
-        displayName,
-        email,
-        id,
-        photoUrl,
-        idToken,
-        serverAuthCode,
-    )
-  }
-}
-
-/**
  * The information necessary to build a an authorization request.
  *
  * Corresponds to the native AuthorizationRequest object, but only contains the fields used by this
@@ -201,17 +108,30 @@ data class UserData(
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class PlatformAuthorizationRequest(val scopes: List<String>) {
+data class PlatformAuthorizationRequest(
+    val scopes: List<String>,
+    val hostedDomain: String? = null,
+    val accountEmail: String? = null,
+    /** If set, adds a call to requestOfflineAccess(this string, true); */
+    val serverClientIdForForcedRefreshToken: String? = null
+) {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): PlatformAuthorizationRequest {
       val scopes = pigeonVar_list[0] as List<String>
-      return PlatformAuthorizationRequest(scopes)
+      val hostedDomain = pigeonVar_list[1] as String?
+      val accountEmail = pigeonVar_list[2] as String?
+      val serverClientIdForForcedRefreshToken = pigeonVar_list[3] as String?
+      return PlatformAuthorizationRequest(
+          scopes, hostedDomain, accountEmail, serverClientIdForForcedRefreshToken)
     }
   }
 
   fun toList(): List<Any?> {
     return listOf(
         scopes,
+        hostedDomain,
+        accountEmail,
+        serverClientIdForForcedRefreshToken,
     )
   }
 }
@@ -305,13 +225,16 @@ data class GetCredentialFailure(
     /** The type of failure. */
     val type: GetCredentialFailureType,
     /** The message associated with the failure, if any. */
-    val message: String? = null
+    val message: String? = null,
+    /** Extra details about the failure, if any. */
+    val details: String? = null
 ) : GetCredentialResult() {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): GetCredentialFailure {
       val type = pigeonVar_list[0] as GetCredentialFailureType
       val message = pigeonVar_list[1] as String?
-      return GetCredentialFailure(type, message)
+      val details = pigeonVar_list[2] as String?
+      return GetCredentialFailure(type, message, details)
     }
   }
 
@@ -319,6 +242,7 @@ data class GetCredentialFailure(
     return listOf(
         type,
         message,
+        details,
     )
   }
 }
@@ -360,13 +284,16 @@ data class AuthorizeFailure(
     /** The type of failure. */
     val type: AuthorizeFailureType,
     /** The message associated with the failure, if any. */
-    val message: String? = null
+    val message: String? = null,
+    /** Extra details about the failure, if any. */
+    val details: String? = null
 ) : AuthorizeResult() {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): AuthorizeFailure {
       val type = pigeonVar_list[0] as AuthorizeFailureType
       val message = pigeonVar_list[1] as String?
-      return AuthorizeFailure(type, message)
+      val details = pigeonVar_list[2] as String?
+      return AuthorizeFailure(type, message, details)
     }
   }
 
@@ -374,6 +301,7 @@ data class AuthorizeFailure(
     return listOf(
         type,
         message,
+        details,
     )
   }
 }
@@ -412,41 +340,32 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
       129.toByte() -> {
-        return (readValue(buffer) as Long?)?.let { SignInType.ofRaw(it.toInt()) }
-      }
-      130.toByte() -> {
         return (readValue(buffer) as Long?)?.let { GetCredentialFailureType.ofRaw(it.toInt()) }
       }
-      131.toByte() -> {
+      130.toByte() -> {
         return (readValue(buffer) as Long?)?.let { AuthorizeFailureType.ofRaw(it.toInt()) }
       }
-      132.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let { InitParams.fromList(it) }
-      }
-      133.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let { UserData.fromList(it) }
-      }
-      134.toByte() -> {
+      131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let { PlatformAuthorizationRequest.fromList(it) }
       }
-      135.toByte() -> {
+      132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let { GetCredentialRequestParams.fromList(it) }
       }
-      136.toByte() -> {
+      133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           PlatformGoogleIdTokenCredential.fromList(it)
         }
       }
-      137.toByte() -> {
+      134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let { GetCredentialFailure.fromList(it) }
       }
-      138.toByte() -> {
+      135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let { GetCredentialSuccess.fromList(it) }
       }
-      139.toByte() -> {
+      136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let { AuthorizeFailure.fromList(it) }
       }
-      140.toByte() -> {
+      137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let { PlatformAuthorizationResult.fromList(it) }
       }
       else -> super.readValueOfType(type, buffer)
@@ -455,52 +374,40 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
 
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?) {
     when (value) {
-      is SignInType -> {
+      is GetCredentialFailureType -> {
         stream.write(129)
         writeValue(stream, value.raw)
       }
-      is GetCredentialFailureType -> {
+      is AuthorizeFailureType -> {
         stream.write(130)
         writeValue(stream, value.raw)
       }
-      is AuthorizeFailureType -> {
-        stream.write(131)
-        writeValue(stream, value.raw)
-      }
-      is InitParams -> {
-        stream.write(132)
-        writeValue(stream, value.toList())
-      }
-      is UserData -> {
-        stream.write(133)
-        writeValue(stream, value.toList())
-      }
       is PlatformAuthorizationRequest -> {
-        stream.write(134)
+        stream.write(131)
         writeValue(stream, value.toList())
       }
       is GetCredentialRequestParams -> {
-        stream.write(135)
+        stream.write(132)
         writeValue(stream, value.toList())
       }
       is PlatformGoogleIdTokenCredential -> {
-        stream.write(136)
+        stream.write(133)
         writeValue(stream, value.toList())
       }
       is GetCredentialFailure -> {
-        stream.write(137)
+        stream.write(134)
         writeValue(stream, value.toList())
       }
       is GetCredentialSuccess -> {
-        stream.write(138)
+        stream.write(135)
         writeValue(stream, value.toList())
       }
       is AuthorizeFailure -> {
-        stream.write(139)
+        stream.write(136)
         writeValue(stream, value.toList())
       }
       is PlatformAuthorizationResult -> {
-        stream.write(140)
+        stream.write(137)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -508,248 +415,6 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
   }
 }
 
-/** Generated interface from Pigeon that represents a handler of messages from Flutter. */
-interface GoogleSignInApi {
-  /** Initializes a sign in request with the given parameters. */
-  fun init(params: InitParams)
-  /** Starts a silent sign in. */
-  fun signInSilently(callback: (Result<UserData>) -> Unit)
-  /** Starts a sign in with user interaction. */
-  fun signIn(callback: (Result<UserData>) -> Unit)
-  /** Requests the access token for the current sign in. */
-  fun getAccessToken(email: String, shouldRecoverAuth: Boolean, callback: (Result<String>) -> Unit)
-  /** Signs out the current user. */
-  fun signOut(callback: (Result<Unit>) -> Unit)
-  /** Revokes scope grants to the application. */
-  fun disconnect(callback: (Result<Unit>) -> Unit)
-  /** Returns whether the user is currently signed in. */
-  fun isSignedIn(): Boolean
-  /** Clears the authentication caching for the given token, requiring a new sign in. */
-  fun clearAuthCache(token: String)
-  /** Requests access to the given scopes. */
-  fun requestScopes(scopes: List<String>, callback: (Result<Boolean>) -> Unit)
-
-  companion object {
-    /** The codec used by GoogleSignInApi. */
-    val codec: MessageCodec<Any?> by lazy { MessagesPigeonCodec() }
-    /**
-     * Sets up an instance of `GoogleSignInApi` to handle messages through the `binaryMessenger`.
-     */
-    @JvmOverloads
-    fun setUp(
-        binaryMessenger: BinaryMessenger,
-        api: GoogleSignInApi?,
-        messageChannelSuffix: String = ""
-    ) {
-      val separatedMessageChannelSuffix =
-          if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-      val taskQueue = binaryMessenger.makeBackgroundTaskQueue()
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.init$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { message, reply ->
-            val args = message as List<Any?>
-            val paramsArg = args[0] as InitParams
-            val wrapped: List<Any?> =
-                try {
-                  api.init(paramsArg)
-                  listOf(null)
-                } catch (exception: Throwable) {
-                  wrapError(exception)
-                }
-            reply.reply(wrapped)
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.signInSilently$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            api.signInSilently { result: Result<UserData> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(wrapError(error))
-              } else {
-                val data = result.getOrNull()
-                reply.reply(wrapResult(data))
-              }
-            }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.signIn$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            api.signIn { result: Result<UserData> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(wrapError(error))
-              } else {
-                val data = result.getOrNull()
-                reply.reply(wrapResult(data))
-              }
-            }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.getAccessToken$separatedMessageChannelSuffix",
-                codec,
-                taskQueue)
-        if (api != null) {
-          channel.setMessageHandler { message, reply ->
-            val args = message as List<Any?>
-            val emailArg = args[0] as String
-            val shouldRecoverAuthArg = args[1] as Boolean
-            api.getAccessToken(emailArg, shouldRecoverAuthArg) { result: Result<String> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(wrapError(error))
-              } else {
-                val data = result.getOrNull()
-                reply.reply(wrapResult(data))
-              }
-            }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.signOut$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            api.signOut { result: Result<Unit> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(wrapError(error))
-              } else {
-                reply.reply(wrapResult(null))
-              }
-            }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.disconnect$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            api.disconnect { result: Result<Unit> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(wrapError(error))
-              } else {
-                reply.reply(wrapResult(null))
-              }
-            }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.isSignedIn$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            val wrapped: List<Any?> =
-                try {
-                  listOf(api.isSignedIn())
-                } catch (exception: Throwable) {
-                  wrapError(exception)
-                }
-            reply.reply(wrapped)
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.clearAuthCache$separatedMessageChannelSuffix",
-                codec,
-                taskQueue)
-        if (api != null) {
-          channel.setMessageHandler { message, reply ->
-            val args = message as List<Any?>
-            val tokenArg = args[0] as String
-            val wrapped: List<Any?> =
-                try {
-                  api.clearAuthCache(tokenArg)
-                  listOf(null)
-                } catch (exception: Throwable) {
-                  wrapError(exception)
-                }
-            reply.reply(wrapped)
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-      run {
-        val channel =
-            BasicMessageChannel<Any?>(
-                binaryMessenger,
-                "dev.flutter.pigeon.google_sign_in_android.GoogleSignInApi.requestScopes$separatedMessageChannelSuffix",
-                codec)
-        if (api != null) {
-          channel.setMessageHandler { message, reply ->
-            val args = message as List<Any?>
-            val scopesArg = args[0] as List<String>
-            api.requestScopes(scopesArg) { result: Result<Boolean> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(wrapError(error))
-              } else {
-                val data = result.getOrNull()
-                reply.reply(wrapResult(data))
-              }
-            }
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
-    }
-  }
-}
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface CredentialManagerApi {
   fun getCredential(
