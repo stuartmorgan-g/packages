@@ -20,7 +20,11 @@ flutter:
 dependencies:
   flutter:
     sdk: flutter
-  google_sign_in_platform_interface: ^2.5.0
+  google_sign_in_platform_interface:
+    git:
+      url: https://github.com/stuartmorgan-g/packages.git
+      ref: google-sign-in-redesign-early-access
+      path: packages/google_sign_in/google_sign_in_platform_interface
 
 dev_dependencies:
   build_runner: ^2.3.0
@@ -37,7 +41,3 @@ topics:
 false_secrets:
   - /example/android/app/google-services.json
   - /example/lib/main.dart
-# FOR TESTING AND INITIAL REVIEW ONLY. DO NOT MERGE.
-# See https://github.com/flutter/flutter/blob/master/docs/ecosystem/contributing/README.md#changing-federated-plugins
-dependency_overrides:
-  google_sign_in_platform_interface: {path: ../../../packages/google_sign_in/google_sign_in_platform_interface}
