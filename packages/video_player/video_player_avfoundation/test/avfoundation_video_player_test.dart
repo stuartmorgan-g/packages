@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:video_player_avfoundation/src/messages.g.dart';
+import 'package:video_player_avfoundation/src/native_video_player.dart';
 import 'package:video_player_avfoundation/video_player_avfoundation.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
@@ -15,7 +16,7 @@ import 'avfoundation_video_player_test.mocks.dart';
 
 @GenerateNiceMocks(<MockSpec<Object>>[
   MockSpec<AVFoundationVideoPlayerApi>(),
-  MockSpec<VideoPlayerInstanceApi>(),
+  MockSpec<NativeVideoPlayer>(),
 ])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,14 +24,14 @@ void main() {
   (
     AVFoundationVideoPlayer,
     MockAVFoundationVideoPlayerApi,
-    MockVideoPlayerInstanceApi,
+    MockNativeVideoPlayer,
   )
   setUpMockPlayer({required int playerId, int? textureId}) {
     final pluginApi = MockAVFoundationVideoPlayerApi();
-    final instanceApi = MockVideoPlayerInstanceApi();
+    final nativePlayer = MockNativeVideoPlayer();
     final player = AVFoundationVideoPlayer(
       pluginApi: pluginApi,
-      playerApiProvider: (_) => instanceApi,
+      nativePlayerProvider: (_) => nativePlayer,
     );
     player.ensurePlayerInitialized(
       playerId,
@@ -38,7 +39,7 @@ void main() {
           ? const VideoPlayerPlatformViewState()
           : VideoPlayerTextureViewState(textureId: textureId),
     );
-    return (player, pluginApi, instanceApi);
+    return (player, pluginApi, nativePlayer);
   }
 
   test('registration', () async {
@@ -65,14 +66,14 @@ void main() {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
         textureId: 101,
       );
       await player.dispose(1);
 
-      verify(playerApi.dispose());
+      verify(nativePlayer.dispose());
     });
 
     test('create with asset', () async {
@@ -418,39 +419,39 @@ void main() {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
       await player.setLooping(1, true);
 
-      verify(playerApi.setLooping(true));
+      verify(nativePlayer.setLooping(true));
     });
 
     test('play', () async {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
       await player.play(1);
 
-      verify(playerApi.play());
+      verify(nativePlayer.play());
     });
 
     test('pause', () async {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
       await player.pause(1);
 
-      verify(playerApi.pause());
+      verify(nativePlayer.pause());
     });
 
     group('setMixWithOthers', () {
@@ -485,35 +486,35 @@ void main() {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
       const volume = 0.7;
       await player.setVolume(1, volume);
 
-      verify(playerApi.setVolume(volume));
+      verify(nativePlayer.setVolume(volume));
     });
 
     test('setPlaybackSpeed', () async {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
       const speed = 1.5;
       await player.setPlaybackSpeed(1, speed);
 
-      verify(playerApi.setPlaybackSpeed(speed));
+      verify(nativePlayer.setPlaybackSpeed(speed));
     });
 
     test('seekTo', () async {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
@@ -523,20 +524,20 @@ void main() {
         const Duration(milliseconds: positionMilliseconds),
       );
 
-      verify(playerApi.seekTo(positionMilliseconds));
+      verify(nativePlayer.seekTo(positionMilliseconds));
     });
 
     test('getPosition', () async {
       final (
         AVFoundationVideoPlayer player,
         _,
-        MockVideoPlayerInstanceApi playerApi,
+        MockNativeVideoPlayer nativePlayer,
       ) = setUpMockPlayer(
         playerId: 1,
       );
       const positionMilliseconds = 12345;
       when(
-        playerApi.getPosition(),
+        nativePlayer.getPosition(),
       ).thenAnswer((_) async => positionMilliseconds);
 
       final Duration position = await player.getPosition(1);

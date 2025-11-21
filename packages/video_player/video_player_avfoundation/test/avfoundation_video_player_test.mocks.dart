@@ -8,6 +8,7 @@ import 'dart:async' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i3;
 import 'package:video_player_avfoundation/src/messages.g.dart' as _i2;
+import 'package:video_player_avfoundation/src/native_video_player.dart' as _i5;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -107,34 +108,36 @@ class MockAVFoundationVideoPlayerApi extends _i1.Mock
           as _i4.Future<String?>);
 }
 
-/// A class which mocks [VideoPlayerInstanceApi].
+/// A class which mocks [NativeVideoPlayer].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockVideoPlayerInstanceApi extends _i1.Mock
-    implements _i2.VideoPlayerInstanceApi {
+class MockNativeVideoPlayer extends _i1.Mock implements _i5.NativeVideoPlayer {
   @override
-  String get pigeonVar_messageChannelSuffix =>
+  _i4.Future<void> play() =>
       (super.noSuchMethod(
-            Invocation.getter(#pigeonVar_messageChannelSuffix),
-            returnValue: _i3.dummyValue<String>(
-              this,
-              Invocation.getter(#pigeonVar_messageChannelSuffix),
-            ),
-            returnValueForMissingStub: _i3.dummyValue<String>(
-              this,
-              Invocation.getter(#pigeonVar_messageChannelSuffix),
-            ),
-          )
-          as String);
-
-  @override
-  _i4.Future<void> setLooping(bool? looping) =>
-      (super.noSuchMethod(
-            Invocation.method(#setLooping, [looping]),
+            Invocation.method(#play, []),
             returnValue: _i4.Future<void>.value(),
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> pause() =>
+      (super.noSuchMethod(
+            Invocation.method(#pause, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<int> getPosition() =>
+      (super.noSuchMethod(
+            Invocation.method(#getPosition, []),
+            returnValue: _i4.Future<int>.value(0),
+            returnValueForMissingStub: _i4.Future<int>.value(0),
+          )
+          as _i4.Future<int>);
 
   @override
   _i4.Future<void> setVolume(double? volume) =>
@@ -155,36 +158,18 @@ class MockVideoPlayerInstanceApi extends _i1.Mock
           as _i4.Future<void>);
 
   @override
-  _i4.Future<void> play() =>
+  _i4.Future<void> seekTo(int? positionMilliseconds) =>
       (super.noSuchMethod(
-            Invocation.method(#play, []),
+            Invocation.method(#seekTo, [positionMilliseconds]),
             returnValue: _i4.Future<void>.value(),
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
 
   @override
-  _i4.Future<int> getPosition() =>
+  _i4.Future<void> setLooping(bool? looping) =>
       (super.noSuchMethod(
-            Invocation.method(#getPosition, []),
-            returnValue: _i4.Future<int>.value(0),
-            returnValueForMissingStub: _i4.Future<int>.value(0),
-          )
-          as _i4.Future<int>);
-
-  @override
-  _i4.Future<void> seekTo(int? position) =>
-      (super.noSuchMethod(
-            Invocation.method(#seekTo, [position]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
-
-  @override
-  _i4.Future<void> pause() =>
-      (super.noSuchMethod(
-            Invocation.method(#pause, []),
+            Invocation.method(#setLooping, [looping]),
             returnValue: _i4.Future<void>.value(),
             returnValueForMissingStub: _i4.Future<void>.value(),
           )

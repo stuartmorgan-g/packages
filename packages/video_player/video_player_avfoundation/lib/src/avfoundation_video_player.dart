@@ -9,10 +9,13 @@ import 'package:flutter/widgets.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 import 'messages.g.dart';
+import 'native_video_player.dart';
 
-/// The non-test implementation of `_apiProvider`.
-VideoPlayerInstanceApi _productionApiProvider(int playerId) {
-  return VideoPlayerInstanceApi(messageChannelSuffix: playerId.toString());
+/// The non-test implementation of `nativePlayerProvider`.
+NativeVideoPlayer _productionNativePlayerProvider(int playerId) {
+  return _PigeonNativeVideoPlayer(
+    VideoPlayerInstanceApi(messageChannelSuffix: playerId.toString()),
+  );
 }
 
 /// An iOS implementation of [VideoPlayerPlatform] that uses the
@@ -22,14 +25,15 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   AVFoundationVideoPlayer({
     @visibleForTesting AVFoundationVideoPlayerApi? pluginApi,
     @visibleForTesting
-    VideoPlayerInstanceApi Function(int playerId)? playerApiProvider,
+    NativeVideoPlayer Function(int playerId)? nativePlayerProvider,
   }) : _api = pluginApi ?? AVFoundationVideoPlayerApi(),
-       _playerApiProvider = playerApiProvider ?? _productionApiProvider;
+       _nativePlayerProvider =
+           nativePlayerProvider ?? _productionNativePlayerProvider;
 
   final AVFoundationVideoPlayerApi _api;
-  // A method to create VideoPlayerInstanceApi instances, which can be
+  // A method to create NativeVideoPlayer instances, which can be
   // overridden for testing.
-  final VideoPlayerInstanceApi Function(int mapId) _playerApiProvider;
+  final NativeVideoPlayer Function(int playerId) _nativePlayerProvider;
 
   final Map<int, _PlayerInstance> _players = <int, _PlayerInstance>{};
 
@@ -121,7 +125,7 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   void ensurePlayerInitialized(int playerId, VideoPlayerViewState viewState) {
     _players.putIfAbsent(playerId, () {
       return _PlayerInstance(
-        _playerApiProvider(playerId),
+        _nativePlayerProvider(playerId),
         viewState,
         eventChannel: EventChannel(
           // This must match the channel name used in FVPVideoPlayerPlugin.m.
@@ -219,34 +223,35 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
 /// [AVFoundationVideoPlayer].
 class _PlayerInstance {
   _PlayerInstance(
-    this._api,
+    this._nativePlayer,
     this.viewState, {
     required EventChannel eventChannel,
   }) : _eventChannel = eventChannel;
 
-  final VideoPlayerInstanceApi _api;
+  final NativeVideoPlayer _nativePlayer;
   final VideoPlayerViewState viewState;
   final EventChannel _eventChannel;
   final StreamController<VideoEvent> _eventStreamController =
       StreamController<VideoEvent>.broadcast();
   StreamSubscription<dynamic>? _eventSubscription;
 
-  Future<void> play() => _api.play();
+  Future<void> play() => _nativePlayer.play();
 
-  Future<void> pause() => _api.pause();
+  Future<void> pause() => _nativePlayer.pause();
 
-  Future<void> setLooping(bool looping) => _api.setLooping(looping);
+  Future<void> setLooping(bool looping) => _nativePlayer.setLooping(looping);
 
-  Future<void> setVolume(double volume) => _api.setVolume(volume);
+  Future<void> setVolume(double volume) => _nativePlayer.setVolume(volume);
 
-  Future<void> setPlaybackSpeed(double speed) => _api.setPlaybackSpeed(speed);
+  Future<void> setPlaybackSpeed(double speed) =>
+      _nativePlayer.setPlaybackSpeed(speed);
 
   Future<void> seekTo(Duration position) {
-    return _api.seekTo(position.inMilliseconds);
+    return _nativePlayer.seekTo(position.inMilliseconds);
   }
 
   Future<Duration> getPosition() async {
-    return Duration(milliseconds: await _api.getPosition());
+    return Duration(milliseconds: await _nativePlayer.getPosition());
   }
 
   Stream<VideoEvent> get videoEvents {
@@ -263,7 +268,7 @@ class _PlayerInstance {
   Future<void> dispose() async {
     await _eventSubscription?.cancel();
     unawaited(_eventStreamController.close());
-    await _api.dispose();
+    await _nativePlayer.dispose();
   }
 
   void _onStreamEvent(dynamic event) {
@@ -336,4 +341,35 @@ final class VideoPlayerTextureViewState extends VideoPlayerViewState {
 final class VideoPlayerPlatformViewState extends VideoPlayerViewState {
   /// Creates a new instance of [VideoPlayerPlatformViewState].
   const VideoPlayerPlatformViewState();
+}
+
+class _PigeonNativeVideoPlayer implements NativeVideoPlayer {
+  final VideoPlayerInstanceApi _api;
+
+  _PigeonNativeVideoPlayer(this._api);
+
+  @override
+  Future<void> play() => _api.play();
+
+  @override
+  Future<void> pause() => _api.pause();
+
+  @override
+  Future<int> getPosition() => _api.getPosition();
+
+  @override
+  Future<void> setVolume(double volume) => _api.setVolume(volume);
+
+  @override
+  Future<void> setPlaybackSpeed(double speed) => _api.setPlaybackSpeed(speed);
+
+  @override
+  Future<void> seekTo(int positionMilliseconds) =>
+      _api.seekTo(positionMilliseconds);
+
+  @override
+  Future<void> setLooping(bool looping) => _api.setLooping(looping);
+
+  @override
+  Future<void> dispose() => _api.dispose();
 }
