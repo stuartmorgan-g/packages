@@ -6,6 +6,7 @@
 #import "FVPDisplayLink.h"
 #import "FVPVideoPlayer.h"
 #import "FVPVideoPlayerPlugin.h"
+#import "FVPViewProvider.h"
 #import "messages.g.h"
 
 // Protocol for an AVPlayer instance factory. Used for injecting display links in tests.

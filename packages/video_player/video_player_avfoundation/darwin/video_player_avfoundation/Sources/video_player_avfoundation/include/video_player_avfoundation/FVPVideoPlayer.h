@@ -4,16 +4,8 @@
 
 #import <AVFoundation/AVFoundation.h>
 
-#import "./messages.g.h"
 #import "FVPAVFactory.h"
 #import "FVPVideoEventListener.h"
-#import "FVPViewProvider.h"
-
-#if TARGET_OS_OSX
-#import <FlutterMacOS/FlutterMacOS.h>
-#else
-#import <Flutter/Flutter.h>
-#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// This class contains all functionalities needed to manage video playback in platform views and is
 /// typically used alongside FVPNativeVideoViewFactory. If you need to display a video using a
 /// texture, use FVPTextureBasedVideoPlayer instead.
-@interface FVPVideoPlayer : NSObject <FVPVideoPlayerInstanceApi>
+@interface FVPVideoPlayer : NSObject
 /// The AVPlayer instance used for video playback.
 @property(nonatomic, readonly) AVPlayer *player;
 /// Indicates whether the video player has been disposed.
@@ -36,11 +28,19 @@ NS_ASSUME_NONNULL_BEGIN
 /// A block that will be called when dispose is called.
 @property(nonatomic, nullable, copy) void (^onDisposed)(void);
 
-/// Initializes a new instance of FVPVideoPlayer with the given AVPlayerItem, AV factory, and view
-/// provider.
-- (instancetype)initWithPlayerItem:(AVPlayerItem *)item
-                         avFactory:(id<FVPAVFactory>)avFactory
-                      viewProvider:(NSObject<FVPViewProvider> *)viewProvider;
+- (void)play;
+
+- (void)pause;
+
+- (void)seekTo:(int64_t)position completion:(void (^)(void))completion;
+
+- (void)setLooping:(BOOL)looping;
+
+- (void)setVolume:(double)volume;
+
+- (void)setPlaybackSpeed:(double)speed;
+
+- (void)dispose;
 
 @end
 

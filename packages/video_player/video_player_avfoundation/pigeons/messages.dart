@@ -32,11 +32,26 @@ class CreationOptions {
   Map<String, String> httpHeaders;
 }
 
-class TexturePlayerIds {
-  TexturePlayerIds({required this.playerId, required this.textureId});
+class TexturePlayerCreationResponse {
+  TexturePlayerCreationResponse({
+    required this.playerId,
+    required this.textureId,
+    required this.rawPointer,
+  });
 
   final int playerId;
   final int textureId;
+  final int rawPointer;
+}
+
+class PlatformViewPlayerCreationResponse {
+  PlatformViewPlayerCreationResponse({
+    required this.playerId,
+    required this.rawPointer,
+  });
+
+  final int playerId;
+  final int rawPointer;
 }
 
 @HostApi()
@@ -46,30 +61,16 @@ abstract class AVFoundationVideoPlayerApi {
   // Creates a new player using a platform view for rendering and returns its
   // ID.
   @ObjCSelector('createPlatformViewPlayerWithOptions:')
-  int createForPlatformView(CreationOptions params);
+  PlatformViewPlayerCreationResponse createForPlatformView(
+    CreationOptions params,
+  );
   // Creates a new player using a texture for rendering and returns its IDs.
   @ObjCSelector('createTexturePlayerWithOptions:')
-  TexturePlayerIds createForTextureView(CreationOptions creationOptions);
+  TexturePlayerCreationResponse createForTextureView(
+    CreationOptions creationOptions,
+  );
   @ObjCSelector('setMixWithOthers:')
   void setMixWithOthers(bool mixWithOthers);
   @ObjCSelector('fileURLForAssetWithName:package:')
   String? getAssetUrl(String asset, String? package);
-}
-
-@HostApi()
-abstract class VideoPlayerInstanceApi {
-  @ObjCSelector('setLooping:')
-  void setLooping(bool looping);
-  @ObjCSelector('setVolume:')
-  void setVolume(double volume);
-  @ObjCSelector('setPlaybackSpeed:')
-  void setPlaybackSpeed(double speed);
-  void play();
-  @ObjCSelector('position')
-  int getPosition();
-  @async
-  @ObjCSelector('seekTo:')
-  void seekTo(int position);
-  void pause();
-  void dispose();
 }

@@ -24,10 +24,20 @@ import 'package:video_player_avfoundation/src/native_video_player.dart' as _i5;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeTexturePlayerIds_0 extends _i1.SmartFake
-    implements _i2.TexturePlayerIds {
-  _FakeTexturePlayerIds_0(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakePlatformViewPlayerCreationResponse_0 extends _i1.SmartFake
+    implements _i2.PlatformViewPlayerCreationResponse {
+  _FakePlatformViewPlayerCreationResponse_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(parent, parentInvocation);
+}
+
+class _FakeTexturePlayerCreationResponse_1 extends _i1.SmartFake
+    implements _i2.TexturePlayerCreationResponse {
+  _FakeTexturePlayerCreationResponse_1(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(parent, parentInvocation);
 }
 
 /// A class which mocks [AVFoundationVideoPlayerApi].
@@ -60,34 +70,49 @@ class MockAVFoundationVideoPlayerApi extends _i1.Mock
           as _i4.Future<void>);
 
   @override
-  _i4.Future<int> createForPlatformView(_i2.CreationOptions? params) =>
+  _i4.Future<_i2.PlatformViewPlayerCreationResponse> createForPlatformView(
+    _i2.CreationOptions? params,
+  ) =>
       (super.noSuchMethod(
             Invocation.method(#createForPlatformView, [params]),
-            returnValue: _i4.Future<int>.value(0),
-            returnValueForMissingStub: _i4.Future<int>.value(0),
+            returnValue:
+                _i4.Future<_i2.PlatformViewPlayerCreationResponse>.value(
+                  _FakePlatformViewPlayerCreationResponse_0(
+                    this,
+                    Invocation.method(#createForPlatformView, [params]),
+                  ),
+                ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.PlatformViewPlayerCreationResponse>.value(
+                  _FakePlatformViewPlayerCreationResponse_0(
+                    this,
+                    Invocation.method(#createForPlatformView, [params]),
+                  ),
+                ),
           )
-          as _i4.Future<int>);
+          as _i4.Future<_i2.PlatformViewPlayerCreationResponse>);
 
   @override
-  _i4.Future<_i2.TexturePlayerIds> createForTextureView(
+  _i4.Future<_i2.TexturePlayerCreationResponse> createForTextureView(
     _i2.CreationOptions? creationOptions,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#createForTextureView, [creationOptions]),
-            returnValue: _i4.Future<_i2.TexturePlayerIds>.value(
-              _FakeTexturePlayerIds_0(
+            returnValue: _i4.Future<_i2.TexturePlayerCreationResponse>.value(
+              _FakeTexturePlayerCreationResponse_1(
                 this,
                 Invocation.method(#createForTextureView, [creationOptions]),
               ),
             ),
-            returnValueForMissingStub: _i4.Future<_i2.TexturePlayerIds>.value(
-              _FakeTexturePlayerIds_0(
-                this,
-                Invocation.method(#createForTextureView, [creationOptions]),
-              ),
-            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.TexturePlayerCreationResponse>.value(
+                  _FakeTexturePlayerCreationResponse_1(
+                    this,
+                    Invocation.method(#createForTextureView, [creationOptions]),
+                  ),
+                ),
           )
-          as _i4.Future<_i2.TexturePlayerIds>);
+          as _i4.Future<_i2.TexturePlayerCreationResponse>);
 
   @override
   _i4.Future<void> setMixWithOthers(bool? mixWithOthers) =>

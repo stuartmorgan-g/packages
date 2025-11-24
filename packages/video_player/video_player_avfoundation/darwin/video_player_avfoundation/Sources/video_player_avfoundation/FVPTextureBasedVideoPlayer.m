@@ -91,10 +91,10 @@
   _displayLink.running = self.isPlaying || self.waitingForFrame;
 }
 
-- (void)seekTo:(NSInteger)position completion:(void (^)(FlutterError *_Nullable))completion {
+- (void)seekTo:(int64_t)position completion:(void (^)(void))completion {
   CMTime previousCMTime = self.player.currentTime;
   [super seekTo:position
-      completion:^(FlutterError *error) {
+      completion:^() {
         if (CMTimeCompare(self.player.currentTime, previousCMTime) != 0) {
           // Ensure that a frame is drawn once available, even if currently paused. In theory a
           // race is possible here where the new frame has already drawn by the time this code
@@ -106,13 +106,13 @@
         }
 
         if (completion) {
-          completion(error);
+          completion();
         }
       }];
 }
 
-- (void)disposeWithError:(FlutterError *_Nullable *_Nonnull)error {
-  [super disposeWithError:error];
+- (void)dispose {
+  [super dispose];
 
   [self.playerLayer removeFromSuperlayer];
 
@@ -207,8 +207,7 @@
 - (void)onTextureUnregistered:(NSObject<FlutterTexture> *)texture {
   dispatch_async(dispatch_get_main_queue(), ^{
     if (!self.disposed) {
-      FlutterError *error;
-      [self disposeWithError:&error];
+      [self dispose];
     }
   });
 }

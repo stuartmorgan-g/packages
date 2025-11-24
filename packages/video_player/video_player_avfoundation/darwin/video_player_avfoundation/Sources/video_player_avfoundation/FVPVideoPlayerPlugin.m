@@ -84,13 +84,12 @@
 }
 
 - (void)detachFromEngineForRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
-  FlutterError *error;
   for (FVPVideoPlayer *player in self.playersByIdentifier.allValues) {
     // Remove the channel and texture cleanup, and the event listener, to ensure that the player
     // doesn't message the engine that is no longer connected.
     player.onDisposed = nil;
     player.eventListener = nil;
-    [player disposeWithError:&error];
+    [player dispose];
   }
   [self.playersByIdentifier removeAllObjects];
   SetUpFVPAVFoundationVideoPlayerApi(registrar.messenger, nil);
@@ -101,21 +100,17 @@
   int64_t playerIdentifier = self.nextPlayerIdentifier++;
   self.playersByIdentifier[@(playerIdentifier)] = player;
 
-  NSObject<FlutterBinaryMessenger> *messenger = self.registrar.messenger;
-  NSString *channelSuffix = [NSString stringWithFormat:@"%lld", playerIdentifier];
-  // Set up the player-specific API handler, and its onDispose unregistration.
-  SetUpFVPVideoPlayerInstanceApiWithSuffix(messenger, player, channelSuffix);
   __weak typeof(self) weakSelf = self;
   player.onDisposed = ^() {
-    SetUpFVPVideoPlayerInstanceApiWithSuffix(messenger, nil, channelSuffix);
     if (extraDisposeHandler) {
       extraDisposeHandler();
     }
     [weakSelf.playersByIdentifier removeObjectForKey:@(playerIdentifier)];
   };
   // Set up the event channel.
+  NSString *channelSuffix = [NSString stringWithFormat:@"%lld", playerIdentifier];
   FVPEventBridge *eventBridge = [[FVPEventBridge alloc]
-      initWithMessenger:messenger
+      initWithMessenger:self.registrar.messenger
             channelName:[NSString stringWithFormat:@"flutter.dev/videoPlayer/videoEvents%@",
                                                    channelSuffix]];
   player.eventListener = eventBridge;
@@ -169,13 +164,14 @@ static void upgradeAudioSessionCategory(AVAudioSessionCategory requestedCategory
   // Disposing a player removes it from the dictionary, so iterate over a copy.
   NSArray<FVPVideoPlayer *> *players = [self.playersByIdentifier.allValues copy];
   for (FVPVideoPlayer *player in players) {
-    [player disposeWithError:&disposeError];
+    [player dispose];
   }
   [self.playersByIdentifier removeAllObjects];
 }
 
-- (nullable NSNumber *)createPlatformViewPlayerWithOptions:(nonnull FVPCreationOptions *)options
-                                                     error:(FlutterError **)error {
+- (nullable FVPPlatformViewPlayerCreationResponse *)
+    createPlatformViewPlayerWithOptions:(nonnull FVPCreationOptions *)options
+                                  error:(FlutterError **)error {
   @try {
     AVPlayerItem *item = [self playerItemWithCreationOptions:options];
 
@@ -184,16 +180,19 @@ static void upgradeAudioSessionCategory(AVAudioSessionCategory requestedCategory
                                                               avFactory:self.avFactory
                                                            viewProvider:self.viewProvider];
 
-    return @([self configurePlayer:player withExtraDisposeHandler:nil]);
+    int64_t playerIdentifier = [self configurePlayer:player withExtraDisposeHandler:nil];
+    return
+        [FVPPlatformViewPlayerCreationResponse makeWithPlayerId:playerIdentifier
+                                                     rawPointer:(NSInteger)(__bridge void *)player];
   } @catch (NSException *exception) {
     *error = [FlutterError errorWithCode:@"video_player" message:exception.reason details:nil];
     return nil;
   }
 }
 
-- (nullable FVPTexturePlayerIds *)createTexturePlayerWithOptions:
-                                      (nonnull FVPCreationOptions *)options
-                                                           error:(FlutterError **)error {
+- (nullable FVPTexturePlayerCreationResponse *)
+    createTexturePlayerWithOptions:(nonnull FVPCreationOptions *)options
+                             error:(FlutterError **)error {
   @try {
     AVPlayerItem *item = [self playerItemWithCreationOptions:options];
     FVPFrameUpdater *frameUpdater =
@@ -218,7 +217,9 @@ static void upgradeAudioSessionCategory(AVAudioSessionCategory requestedCategory
                              withExtraDisposeHandler:^() {
                                [weakSelf.registrar.textures unregisterTexture:textureIdentifier];
                              }];
-    return [FVPTexturePlayerIds makeWithPlayerId:playerIdentifier textureId:textureIdentifier];
+    return [FVPTexturePlayerCreationResponse makeWithPlayerId:playerIdentifier
+                                                    textureId:textureIdentifier
+                                                   rawPointer:(NSInteger)(__bridge void *)player];
   } @catch (NSException *exception) {
     *error = [FlutterError errorWithCode:@"video_player" message:exception.reason details:nil];
     return nil;

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #import <AVFoundation/AVFoundation.h>
+
 #import "FVPAVFactory.h"
 #import "FVPVideoEventListener.h"
 #import "FVPVideoPlayer.h"
@@ -10,8 +11,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Interface intended for use by subclasses, but not other callers.
+/// Interface intended for use only by other native code.
 @interface FVPVideoPlayer ()
+/// Initializes a new instance of FVPVideoPlayer with the given AVPlayerItem, AV factory, and view
+/// provider.
+- (instancetype)initWithPlayerItem:(AVPlayerItem *)item
+                         avFactory:(id<FVPAVFactory>)avFactory
+                      viewProvider:(NSObject<FVPViewProvider> *)viewProvider;
+
+/// Interface intended for use by subclasses, but not other callers.
+#pragma mark - Protected
+
 /// The AVPlayerItemVideoOutput associated with this video player.
 @property(nonatomic, readonly) AVPlayerItemVideoOutput *videoOutput;
 /// The view provider, to obtain view information from.

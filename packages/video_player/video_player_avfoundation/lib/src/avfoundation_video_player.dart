@@ -3,18 +3,25 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:ffi' as ffi;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:objective_c/objective_c.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
+import 'ffi_bindings.g.dart' as ffi_bindings;
 import 'messages.g.dart';
 import 'native_video_player.dart';
 
 /// The non-test implementation of `nativePlayerProvider`.
-NativeVideoPlayer _productionNativePlayerProvider(int playerId) {
-  return _PigeonNativeVideoPlayer(
-    VideoPlayerInstanceApi(messageChannelSuffix: playerId.toString()),
+NativeVideoPlayer _productionNativePlayerProvider(int rawPointer) {
+  return _FfiNativeVideoPlayer(
+    ffi_bindings.FVPVideoPlayer.fromPointer(
+      ffi.Pointer<ObjCObjectImpl>.fromAddress(rawPointer),
+      retain: true,
+      release: true,
+    ),
   );
 }
 
@@ -33,7 +40,7 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   final AVFoundationVideoPlayerApi _api;
   // A method to create NativeVideoPlayer instances, which can be
   // overridden for testing.
-  final NativeVideoPlayer Function(int playerId) _nativePlayerProvider;
+  final NativeVideoPlayer Function(int rawPointer) _nativePlayerProvider;
 
   final Map<int, _PlayerInstance> _players = <int, _PlayerInstance>{};
 
@@ -102,19 +109,23 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
     );
 
     final int playerId;
+    final int rawPointer;
     final VideoPlayerViewState state;
     switch (viewType) {
       case VideoViewType.textureView:
-        final TexturePlayerIds ids = await _api.createForTextureView(
-          pigeonCreationOptions,
-        );
-        playerId = ids.playerId;
-        state = VideoPlayerTextureViewState(textureId: ids.textureId);
+        final TexturePlayerCreationResponse playerInfo = await _api
+            .createForTextureView(pigeonCreationOptions);
+        playerId = playerInfo.playerId;
+        rawPointer = playerInfo.rawPointer;
+        state = VideoPlayerTextureViewState(textureId: playerInfo.textureId);
       case VideoViewType.platformView:
-        playerId = await _api.createForPlatformView(pigeonCreationOptions);
+        final PlatformViewPlayerCreationResponse playerInfo = await _api
+            .createForPlatformView(pigeonCreationOptions);
+        playerId = playerInfo.playerId;
+        rawPointer = playerInfo.rawPointer;
         state = const VideoPlayerPlatformViewState();
     }
-    ensurePlayerInitialized(playerId, state);
+    ensurePlayerInitialized(playerId, rawPointer, state);
 
     return playerId;
   }
@@ -122,10 +133,14 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   /// Returns the API instance for [playerId], creating it if it doesn't already
   /// exist.
   @visibleForTesting
-  void ensurePlayerInitialized(int playerId, VideoPlayerViewState viewState) {
+  void ensurePlayerInitialized(
+    int playerId,
+    int rawPointer,
+    VideoPlayerViewState viewState,
+  ) {
     _players.putIfAbsent(playerId, () {
       return _PlayerInstance(
-        _nativePlayerProvider(playerId),
+        _nativePlayerProvider(rawPointer),
         viewState,
         eventChannel: EventChannel(
           // This must match the channel name used in FVPVideoPlayerPlugin.m.
@@ -343,33 +358,44 @@ final class VideoPlayerPlatformViewState extends VideoPlayerViewState {
   const VideoPlayerPlatformViewState();
 }
 
-class _PigeonNativeVideoPlayer implements NativeVideoPlayer {
-  final VideoPlayerInstanceApi _api;
+class _FfiNativeVideoPlayer implements NativeVideoPlayer {
+  final ffi_bindings.FVPVideoPlayer _fvpVideoPlayer;
 
-  _PigeonNativeVideoPlayer(this._api);
-
-  @override
-  Future<void> play() => _api.play();
+  _FfiNativeVideoPlayer(this._fvpVideoPlayer);
 
   @override
-  Future<void> pause() => _api.pause();
+  Future<void> play() async => _fvpVideoPlayer.play();
 
   @override
-  Future<int> getPosition() => _api.getPosition();
+  Future<void> pause() async => _fvpVideoPlayer.pause();
 
   @override
-  Future<void> setVolume(double volume) => _api.setVolume(volume);
+  Future<int> getPosition() async => _fvpVideoPlayer.position;
 
   @override
-  Future<void> setPlaybackSpeed(double speed) => _api.setPlaybackSpeed(speed);
+  Future<void> setVolume(double volume) async =>
+      _fvpVideoPlayer.setVolume(volume);
 
   @override
-  Future<void> seekTo(int positionMilliseconds) =>
-      _api.seekTo(positionMilliseconds);
+  Future<void> setPlaybackSpeed(double speed) async =>
+      _fvpVideoPlayer.setPlaybackSpeed(speed);
 
   @override
-  Future<void> setLooping(bool looping) => _api.setLooping(looping);
+  Future<void> seekTo(int positionMilliseconds) async {
+    final Completer<void> seekFinished = Completer<void>();
+    _fvpVideoPlayer.seekTo(
+      positionMilliseconds,
+      completion: ffi_bindings.ObjCBlock_ffiVoid.fromFunction(() {
+        seekFinished.complete();
+      }),
+    );
+    return seekFinished.future;
+  }
 
   @override
-  Future<void> dispose() => _api.dispose();
+  Future<void> setLooping(bool looping) async =>
+      _fvpVideoPlayer.setLooping(looping);
+
+  @override
+  Future<void> dispose() async => _fvpVideoPlayer.dispose();
 }

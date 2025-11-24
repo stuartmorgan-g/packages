@@ -35,6 +35,7 @@ void main() {
     );
     player.ensurePlayerInitialized(
       playerId,
+      0, // nativePlayerProvider override means this is unused.
       textureId == null
           ? const VideoPlayerPlatformViewState()
           : VideoPlayerTextureViewState(textureId: textureId),
@@ -87,7 +88,11 @@ void main() {
       );
       const newPlayerId = 2;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async => TexturePlayerIds(playerId: newPlayerId, textureId: 102),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: 102,
+          rawPointer: 0,
+        ),
       );
 
       const asset = 'someAsset';
@@ -155,7 +160,11 @@ void main() {
       );
       const newPlayerId = 2;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async => TexturePlayerIds(playerId: newPlayerId, textureId: 102),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: 102,
+          rawPointer: 0,
+        ),
       );
 
       const uri = 'https://example.com';
@@ -189,9 +198,13 @@ void main() {
         playerId: 1,
         textureId: 101,
       );
-      when(
-        api.createForTextureView(any),
-      ).thenAnswer((_) async => TexturePlayerIds(playerId: 2, textureId: 102));
+      when(api.createForTextureView(any)).thenAnswer(
+        (_) async => TexturePlayerCreationResponse(
+          playerId: 2,
+          textureId: 102,
+          rawPointer: 0,
+        ),
+      );
 
       const headers = <String, String>{'Authorization': 'Bearer token'};
       await player.create(
@@ -219,7 +232,11 @@ void main() {
       );
       const newPlayerId = 2;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async => TexturePlayerIds(playerId: newPlayerId, textureId: 102),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: 102,
+          rawPointer: 0,
+        ),
       );
 
       const fileUri = 'file:///foo/bar';
@@ -249,7 +266,11 @@ void main() {
       );
       const newPlayerId = 2;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async => TexturePlayerIds(playerId: newPlayerId, textureId: 102),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: 102,
+          rawPointer: 0,
+        ),
       );
 
       const asset = 'someAsset';
@@ -290,7 +311,11 @@ void main() {
       );
       const newPlayerId = 2;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async => TexturePlayerIds(playerId: newPlayerId, textureId: 102),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: 102,
+          rawPointer: 0,
+        ),
       );
 
       const uri = 'https://example.com';
@@ -329,7 +354,11 @@ void main() {
       );
       const newPlayerId = 2;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async => TexturePlayerIds(playerId: newPlayerId, textureId: 102),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: 102,
+          rawPointer: 0,
+        ),
       );
 
       const headers = <String, String>{'Authorization': 'Bearer token'};
@@ -363,8 +392,11 @@ void main() {
       const newPlayerId = 2;
       const textureId = 100;
       when(api.createForTextureView(any)).thenAnswer(
-        (_) async =>
-            TexturePlayerIds(playerId: newPlayerId, textureId: textureId),
+        (_) async => TexturePlayerCreationResponse(
+          playerId: newPlayerId,
+          textureId: textureId,
+          rawPointer: 0,
+        ),
       );
 
       const fileUri = 'file:///foo/bar';
@@ -396,7 +428,12 @@ void main() {
         playerId: 1,
       );
       const newPlayerId = 2;
-      when(api.createForPlatformView(any)).thenAnswer((_) async => newPlayerId);
+      when(api.createForPlatformView(any)).thenAnswer(
+        (_) async => PlatformViewPlayerCreationResponse(
+          playerId: newPlayerId,
+          rawPointer: 0,
+        ),
+      );
 
       final int? playerId = await player.createWithOptions(
         VideoCreationOptions(

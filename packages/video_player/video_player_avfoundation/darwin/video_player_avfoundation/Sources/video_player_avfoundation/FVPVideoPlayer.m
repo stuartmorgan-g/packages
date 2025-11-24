@@ -157,7 +157,7 @@ static NSDictionary<NSString *, NSValue *> *FVPGetPlayerItemObservations(void) {
   }
 }
 
-- (void)disposeWithError:(FlutterError *_Nullable *_Nonnull)error {
+- (void)dispose {
   // In some hot restart scenarios, dispose can be called twice, so no-op after the first time.
   if (_disposed) {
     return;
@@ -395,23 +395,21 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
                                                       size:currentItem.presentationSize];
 }
 
-#pragma mark - FVPVideoPlayerInstanceApi
-
-- (void)playWithError:(FlutterError *_Nullable *_Nonnull)error {
+- (void)play {
   _isPlaying = YES;
   [self updatePlayingState];
 }
 
-- (void)pauseWithError:(FlutterError *_Nullable *_Nonnull)error {
+- (void)pause {
   _isPlaying = NO;
   [self updatePlayingState];
 }
 
-- (nullable NSNumber *)position:(FlutterError *_Nullable *_Nonnull)error {
-  return @(FVPCMTimeToMillis([_player currentTime]));
+- (int64_t)position {
+  return FVPCMTimeToMillis([_player currentTime]);
 }
 
-- (void)seekTo:(NSInteger)position completion:(void (^)(FlutterError *_Nullable))completion {
+- (void)seekTo:(int64_t)position completion:(void (^)(void))completion {
   CMTime targetCMTime = CMTimeMake(position, 1000);
   CMTimeValue duration = _player.currentItem.asset.duration.value;
   // Without adding tolerance when seeking to duration,
@@ -424,21 +422,21 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
       completionHandler:^(BOOL completed) {
         if (completion) {
           dispatch_async(dispatch_get_main_queue(), ^{
-            completion(nil);
+            completion();
           });
         }
       }];
 }
 
-- (void)setLooping:(BOOL)looping error:(FlutterError *_Nullable *_Nonnull)error {
+- (void)setLooping:(BOOL)looping {
   _isLooping = looping;
 }
 
-- (void)setVolume:(double)volume error:(FlutterError *_Nullable *_Nonnull)error {
+- (void)setVolume:(double)volume {
   _player.volume = (float)((volume < 0.0) ? 0.0 : ((volume > 1.0) ? 1.0 : volume));
 }
 
-- (void)setPlaybackSpeed:(double)speed error:(FlutterError *_Nullable *_Nonnull)error {
+- (void)setPlaybackSpeed:(double)speed {
   _targetPlaybackSpeed = @(speed);
   [self updatePlayingState];
 }

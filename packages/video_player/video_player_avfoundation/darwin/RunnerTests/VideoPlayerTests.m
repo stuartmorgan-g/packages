@@ -509,9 +509,8 @@
 
   [self keyValueObservingExpectationForObject:avPlayer keyPath:@"currentItem" expectedValue:nil];
 
-  [player disposeWithError:&error];
+  [player dispose];
   XCTAssertEqual(videoPlayerPlugin.playersByIdentifier.count, 0);
-  XCTAssertNil(error);
 
   [self waitForExpectationsWithTimeout:30.0 handler:nil];
 }
@@ -729,8 +728,7 @@
     weakPlayer = player;
     avPlayer = player.player;
 
-    [player disposeWithError:&error];
-    XCTAssertNil(error);
+    [player dispose];
   }
 
   // [FVPVideoPlayerPlugin dispose:error:] selector is dispatching the [FVPVideoPlayer dispose] call
