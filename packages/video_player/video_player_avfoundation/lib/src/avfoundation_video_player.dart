@@ -386,7 +386,7 @@ class _FfiNativeVideoPlayer implements NativeVideoPlayer {
     final Completer<void> seekFinished = Completer<void>();
     _fvpVideoPlayer.seekTo(
       positionMilliseconds,
-      completion: ffi_bindings.ObjCBlock_ffiVoid.fromFunction(() {
+      completion: ffi_bindings.ObjCBlock_ffiVoid.listener(() {
         seekFinished.complete();
       }),
     );
