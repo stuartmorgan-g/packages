@@ -250,15 +250,17 @@ class _PlayerInstance {
       StreamController<VideoEvent>.broadcast();
   StreamSubscription<dynamic>? _eventSubscription;
 
-  Future<void> play() => _nativePlayer.play();
+  Future<void> play() async => _nativePlayer.play();
 
-  Future<void> pause() => _nativePlayer.pause();
+  Future<void> pause() async => _nativePlayer.pause();
 
-  Future<void> setLooping(bool looping) => _nativePlayer.setLooping(looping);
+  Future<void> setLooping(bool looping) async =>
+      _nativePlayer.setLooping(looping);
 
-  Future<void> setVolume(double volume) => _nativePlayer.setVolume(volume);
+  Future<void> setVolume(double volume) async =>
+      _nativePlayer.setVolume(volume);
 
-  Future<void> setPlaybackSpeed(double speed) =>
+  Future<void> setPlaybackSpeed(double speed) async =>
       _nativePlayer.setPlaybackSpeed(speed);
 
   Future<void> seekTo(Duration position) {
@@ -266,7 +268,7 @@ class _PlayerInstance {
   }
 
   Future<Duration> getPosition() async {
-    return Duration(milliseconds: await _nativePlayer.getPosition());
+    return Duration(milliseconds: _nativePlayer.getPosition());
   }
 
   Stream<VideoEvent> get videoEvents {
@@ -283,7 +285,7 @@ class _PlayerInstance {
   Future<void> dispose() async {
     await _eventSubscription?.cancel();
     unawaited(_eventStreamController.close());
-    await _nativePlayer.dispose();
+    _nativePlayer.dispose();
   }
 
   void _onStreamEvent(dynamic event) {
@@ -364,20 +366,19 @@ class _FfiNativeVideoPlayer implements NativeVideoPlayer {
   _FfiNativeVideoPlayer(this._fvpVideoPlayer);
 
   @override
-  Future<void> play() async => _fvpVideoPlayer.play();
+  void play() => _fvpVideoPlayer.play();
 
   @override
-  Future<void> pause() async => _fvpVideoPlayer.pause();
+  void pause() => _fvpVideoPlayer.pause();
 
   @override
-  Future<int> getPosition() async => _fvpVideoPlayer.position;
+  int getPosition() => _fvpVideoPlayer.position;
 
   @override
-  Future<void> setVolume(double volume) async =>
-      _fvpVideoPlayer.setVolume(volume);
+  void setVolume(double volume) => _fvpVideoPlayer.setVolume(volume);
 
   @override
-  Future<void> setPlaybackSpeed(double speed) async =>
+  void setPlaybackSpeed(double speed) =>
       _fvpVideoPlayer.setPlaybackSpeed(speed);
 
   @override
@@ -393,9 +394,8 @@ class _FfiNativeVideoPlayer implements NativeVideoPlayer {
   }
 
   @override
-  Future<void> setLooping(bool looping) async =>
-      _fvpVideoPlayer.setLooping(looping);
+  void setLooping(bool looping) => _fvpVideoPlayer.setLooping(looping);
 
   @override
-  Future<void> dispose() async => _fvpVideoPlayer.dispose();
+  void dispose() => _fvpVideoPlayer.dispose();
 }

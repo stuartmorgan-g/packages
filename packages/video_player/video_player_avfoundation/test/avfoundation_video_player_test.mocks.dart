@@ -138,49 +138,37 @@ class MockAVFoundationVideoPlayerApi extends _i1.Mock
 /// See the documentation for Mockito's code generation for more information.
 class MockNativeVideoPlayer extends _i1.Mock implements _i5.NativeVideoPlayer {
   @override
-  _i4.Future<void> play() =>
-      (super.noSuchMethod(
-            Invocation.method(#play, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  void play() => super.noSuchMethod(
+    Invocation.method(#play, []),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  _i4.Future<void> pause() =>
-      (super.noSuchMethod(
-            Invocation.method(#pause, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  void pause() => super.noSuchMethod(
+    Invocation.method(#pause, []),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  _i4.Future<int> getPosition() =>
+  int getPosition() =>
       (super.noSuchMethod(
             Invocation.method(#getPosition, []),
-            returnValue: _i4.Future<int>.value(0),
-            returnValueForMissingStub: _i4.Future<int>.value(0),
+            returnValue: 0,
+            returnValueForMissingStub: 0,
           )
-          as _i4.Future<int>);
+          as int);
 
   @override
-  _i4.Future<void> setVolume(double? volume) =>
-      (super.noSuchMethod(
-            Invocation.method(#setVolume, [volume]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  void setVolume(double? volume) => super.noSuchMethod(
+    Invocation.method(#setVolume, [volume]),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  _i4.Future<void> setPlaybackSpeed(double? speed) =>
-      (super.noSuchMethod(
-            Invocation.method(#setPlaybackSpeed, [speed]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  void setPlaybackSpeed(double? speed) => super.noSuchMethod(
+    Invocation.method(#setPlaybackSpeed, [speed]),
+    returnValueForMissingStub: null,
+  );
 
   @override
   _i4.Future<void> seekTo(int? positionMilliseconds) =>
@@ -192,20 +180,14 @@ class MockNativeVideoPlayer extends _i1.Mock implements _i5.NativeVideoPlayer {
           as _i4.Future<void>);
 
   @override
-  _i4.Future<void> setLooping(bool? looping) =>
-      (super.noSuchMethod(
-            Invocation.method(#setLooping, [looping]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  void setLooping(bool? looping) => super.noSuchMethod(
+    Invocation.method(#setLooping, [looping]),
+    returnValueForMissingStub: null,
+  );
 
   @override
-  _i4.Future<void> dispose() =>
-      (super.noSuchMethod(
-            Invocation.method(#dispose, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
 }
