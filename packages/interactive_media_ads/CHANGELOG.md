@@ -1,3 +1,7 @@
+## 0.3.0+8
+
+* Updates to pigeon 26.1.4.
+
 ## 0.3.0+7
 
 * Bumps kotlin_version to 2.2.21.
