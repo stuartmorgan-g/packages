@@ -14,10 +14,6 @@ void main() {
       objectiveCFile: packageRoot.resolve(
         'darwin/video_player_avfoundation/Sources/video_player_avfoundation/FFIBindings.g.m',
       ),
-      /*style: const DynamicLibraryBindings(
-        wrapperName: 'FoundationFFI',
-        wrapperDocComment: 'Bindings for NSFileManager.',
-      ),*/
     ),
     headers: Headers(
       entryPoints: <Uri>[

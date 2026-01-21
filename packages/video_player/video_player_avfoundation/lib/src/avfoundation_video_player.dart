@@ -361,9 +361,9 @@ final class VideoPlayerPlatformViewState extends VideoPlayerViewState {
 }
 
 class _FfiNativeVideoPlayer implements NativeVideoPlayer {
-  final ffi_bindings.FVPVideoPlayer _fvpVideoPlayer;
-
   _FfiNativeVideoPlayer(this._fvpVideoPlayer);
+
+  final ffi_bindings.FVPVideoPlayer _fvpVideoPlayer;
 
   @override
   void play() => _fvpVideoPlayer.play();
@@ -383,7 +383,7 @@ class _FfiNativeVideoPlayer implements NativeVideoPlayer {
 
   @override
   Future<void> seekTo(int positionMilliseconds) async {
-    final Completer<void> seekFinished = Completer<void>();
+    final seekFinished = Completer<void>();
     _fvpVideoPlayer.seekTo(
       positionMilliseconds,
       completion: ffi_bindings.ObjCBlock_ffiVoid.listener(() {
