@@ -41,6 +41,10 @@ class TexturePlayerCreationResponse {
 
   final int playerId;
   final int textureId;
+
+  /// The raw pointer to the underlying AVPlayer instance.
+  ///
+  /// This point is valid until the player is disposed.
   final int rawPointer;
 }
 
@@ -51,6 +55,10 @@ class PlatformViewPlayerCreationResponse {
   });
 
   final int playerId;
+
+  /// The raw pointer to the underlying AVPlayer instance.
+  ///
+  /// This point is valid until the player is disposed.
   final int rawPointer;
 }
 
@@ -59,12 +67,13 @@ abstract class AVFoundationVideoPlayerApi {
   @ObjCSelector('initialize')
   void initialize();
   // Creates a new player using a platform view for rendering and returns its
-  // ID.
+  // information.
   @ObjCSelector('createPlatformViewPlayerWithOptions:')
   PlatformViewPlayerCreationResponse createForPlatformView(
     CreationOptions params,
   );
-  // Creates a new player using a texture for rendering and returns its IDs.
+  // Creates a new player using a texture for rendering and returns its
+  // information.
   @ObjCSelector('createTexturePlayerWithOptions:')
   TexturePlayerCreationResponse createForTextureView(
     CreationOptions creationOptions,

@@ -573,9 +573,7 @@ void main() {
         playerId: 1,
       );
       const positionMilliseconds = 12345;
-      when(
-        nativePlayer.getPosition(),
-      ).thenReturn(positionMilliseconds);
+      when(nativePlayer.getPosition()).thenReturn(positionMilliseconds);
 
       final Duration position = await player.getPosition(1);
       expect(position, const Duration(milliseconds: positionMilliseconds));
